@@ -20,6 +20,7 @@ class FaceDetector:
             return crop_img
         return None
 
+
     #run once for extract faces from photos and save them in /faces for simple load in SFrame
     @staticmethod
     def faceExtractor(imgsdir,cascPath, facesFolder):
