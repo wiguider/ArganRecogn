@@ -15,14 +15,17 @@
 import graphlab as gl
 from docutils.nodes import image
 from FaceDetector import FaceDetector as fd
+import ConfigParser
 
-#TODO : get this limks from Desktop.ini
 # Get user supplied values
-path = "/home/ilyas/Desktop/FaceRecognrtionDeepLearning/FaceRecogn/"
-cascPath = path + "haarcascade_frontalface_default.xml"
-facesFolder = path+"faces/"
-facesFolderTest = path+"Test/"
-imgsdir = "/home/ilyas/Dropbox/lfw"
+config =ConfigParser.ConfigParser()
+config.read('config.ini')
+path = config.get('Paths','path')
+cascPath = config.get('Paths','cascPath')
+facesFolder = config.get('Paths','facesFolder')
+facesFolderTest = config.get('Paths','facesFolderTest')
+imgsdir = config.get('Paths','imgsdir')
+
 
 
 def main():
