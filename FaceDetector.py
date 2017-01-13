@@ -24,10 +24,14 @@ class FaceDetector:
     # run once for extract faces from photos and save them in /faces for simple load in SFrame
     @staticmethod
     def face_extractor(imgsdir, cascPath, facesFolder):
+        if os.listdir(facesFolder):
+            return
         print("It can be a problem if the algorithm detect more or less than one Face!")
+        # if the folder doesn't exist we just create it
+        if not os.path.exists(facesFolder):
+            os.makedirs(facesFolder)
         subdirs = [x[0] for x in os.walk(imgsdir)]
-        print facesFolder
-        print len(subdirs)
+
         for subdir in subdirs:
             files = os.walk(subdir).next()[2]
             if len(files) > 0:
