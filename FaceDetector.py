@@ -5,7 +5,7 @@ class FaceDetector:
 
     @staticmethod
     def  getFaceFromImage(imagePath,cascPath):
-        # Create the haar cascade
+        # Create the har cascade
         faceCascade = cv2.CascadeClassifier(cascPath)
         # Read the image
         image = cv2.imread(imagePath)

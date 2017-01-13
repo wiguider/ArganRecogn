@@ -29,14 +29,19 @@ imgsdir = config.get('Paths','imgsdir')
 
 
 def main():
-    #TODO : integrate this step in the main procesus
-    print "step 1 : DO IT ONECE : Extract Faces from images and put in a dictionary <label:name_of_face, value:path_to_face>, the dict is optionally"
+    #TODO : integrate this step in the main processus
+    print "step 1 : DO IT ONCE : Extract Faces from images and put in a dictionary " \
+          "<label:name_of_face, value:path_to_face>, the dict is optionally"
     #extact all faces from images <do it just for the first time> : Done
     #fd.faceExtractor(imgsdir,cascPath, facesFolder)
 
     print "step 2 : Load the faces in a Frame : <Image_brut,Its_Class>"
     #load_images return an SFram :  path |   image
-    image_sarray =  gl.image_analysis.load_images(facesFolder, "auto", with_path=True,recursive = True,ignore_failure=True)
+    image_sarray = gl.image_analysis.load_images(facesFolder,
+                                                  "auto",
+                                                  with_path=True,
+                                                  recursive = True,
+                                                  ignore_failure=True)
     classes = []
     for element in image_sarray['path']:
         classes.append(getMyClass(element))
@@ -55,14 +60,19 @@ def main():
     # create my NN
     net = gl.deeplearning.create(training_data, target='Class')
     # Train NN
-    m = gl.neuralnet_classifier.create(training_data, target='Class', network=net, validation_set=validation_data,metric=['accuracy', 'recall@2'], max_iterations=3)
+    m = gl.neuralnet_classifier.create(training_data,
+                                       target='Class',
+                                       network=net,
+                                       validation_set=validation_data,
+                                       metric=['accuracy', 'recall@2'],
+                                       max_iterations=3)
 
     print "step 5 : Classify Data with Test Set"
     # classify the test set and print predict
     pred = m.classify(test_data)
     print pred
 
-#TODO : make the main clean : put this method in amother class
+#TODO : make the main clean : put this method in another class
 def getMyClass(elment_path):
     list_split_strings = elment_path.split('/')
     faceName = list_split_strings[len(list_split_strings) - 1]
