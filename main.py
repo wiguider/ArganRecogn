@@ -36,7 +36,7 @@ def extract_faces_from_images():
     print "step 1 : DO IT ONCE : Extract Faces from images and put in a dictionary " \
           "<label:name_of_face, value:path_to_face>, the dict is optionally"
     # extract all faces from images <do it just for the first time> : Done
-    fd.faceExtractor(imgsdir, cascPath, facesFolder)
+    fd.face_extractor(imgsdir, cascPath, facesFolder)
 
 
 def load_images_in_frame():
@@ -84,6 +84,7 @@ def train_network(training_data, validation_data):
 def get_face_name(element_path):
     list_split_strings = element_path.split('/')
     face_name = list_split_strings[len(list_split_strings) - 2]
+    print "> " + face_name
     return face_name
 
 
