@@ -83,20 +83,23 @@ def train_network(training_data, validation_data):
 # TODO : make the main clean : put this method in another class
 def get_face_name(element_path):
     list_split_strings = element_path.split('/')
-    face_name = list_split_strings[len(list_split_strings) - 2]
-    print "> " + face_name
-    return face_name
+    face_name_num = list_split_strings[len(list_split_strings) - 1]
+    face_name_arr = face_name_num.split('_')
+    print face_name_num
+    return face_name_arr[0] + ' ' + face_name_arr[1]
 
 
 def main():
     extract_faces_from_images()
     images_array = load_images_in_frame()
-    data_set, test_data, training_data, validation_data = split_images_array(images_array)
-    classifier = train_network(training_data, validation_data)
-    print "step 5 : Classify Data with Test Set"
-    # classify the test set and print predict
-    pred = classifier.classify(test_data)
-    print pred
+    vis = gl.Sketch(images_array['Class'])
+    print vis
+    # data_set, test_data, training_data, validation_data = split_images_array(images_array)
+    # classifier = train_network(training_data, validation_data)
+    # print "step 5 : Classify Data with Test Set"
+    # # classify the test set and print predict
+    # pred = classifier.classify(test_data)
+    # print pred
 
 
 if __name__ == '__main__':
