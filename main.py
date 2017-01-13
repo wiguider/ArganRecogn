@@ -59,13 +59,13 @@ def load_images_in_frame():
 def split_images_array(images_array):
     print "step 3 : Spliting the Data to Traing set, Validation and Test Sets"
     # Creating test samples
-    data_set, test_data = images_array.random_split(0.75)
+    dataset, test_data = images_array.random_split(0.75)
     # Creating training samples
-    training_data, validation_data = data_set.random_split(0.8)
+    training_data, validation_data = dataset.random_split(0.8)
     # make sure that all faces have the same size
     training_data['image'] = gl.image_analysis.resize(training_data['image'], 110, 110, 1, decode=True)
     validation_data['image'] = gl.image_analysis.resize(validation_data['image'], 110, 110, 1, decode=True)
-    return data_set, test_data, training_data, validation_data
+    return dataset, test_data, training_data, validation_data
 
 
 def train_network(training_data, validation_data):

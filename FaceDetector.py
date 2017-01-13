@@ -26,18 +26,19 @@ class FaceDetector:
     def face_extractor(imgsdir, cascPath, facesFolder):
         print("It can be a problem if the algorithm detect more or less than one Face!")
         subdirs = [x[0] for x in os.walk(imgsdir)]
+        print facesFolder
         print len(subdirs)
         for subdir in subdirs:
             files = os.walk(subdir).next()[2]
-            if (len(files) > 0):
+            if len(files) > 0:
                 for file in files:
-                    if (file != '.DS_Store'):
-                        print file
+                    if file != '.DS_Store' and file != '':
                         pathimg = subdir + "/" + file
                         crop_img = FaceDetector.get_face_from_image(pathimg, cascPath)
-                        if (crop_img != None):
+                        if crop_img is not None:
                             imgNameSpliting = pathimg.split('/')
                             faceName = imgNameSpliting[len(imgNameSpliting) - 1]
+                            print facesFolder
                             cv2.imwrite(os.path.join(facesFolder, faceName), crop_img)
                         else:
                             print "Face Null => can't be save "
