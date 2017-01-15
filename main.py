@@ -88,6 +88,14 @@ def get_face_name(element_path):
     return face_name_arr[0] + ' ' + face_name_arr[1]
 
 
+def classify_and_save(classifier, test_data):
+    print "step 5 : Classify Data with Test Set"
+    # classify the test set and print predict
+    print "3==================>"
+    pred = classifier.classify(test_data)
+    pred.save('data/training_data.json', format='json')
+
+
 def main():
     extract_faces_from_images()
     images_array = load_images_in_frame()
@@ -95,11 +103,7 @@ def main():
     # print vis
     data_set, test_data, training_data, validation_data = split_images_array(images_array)
     classifier = train_network(training_data, validation_data)
-    print "step 5 : Classify Data with Test Set"
-    # classify the test set and print predict
-    print "3==================>"
-    pred = classifier.classify(test_data)
-    pred.save('data/training_data.json', format='json')
+    classify_and_save(classifier, test_data)
 
 
 if __name__ == '__main__':
