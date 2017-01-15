@@ -27,13 +27,12 @@ facesFolderTest = config.get('Paths', 'facesFolderTest')
 imgsdir = config.get('Paths', 'imgsdir')
 
 
-# TODO: 1.Crop the face zone
-# TODO: 2.Extract the characteristics from the face zone
-# TODO: 3.Compare the characteristics vectors of the probe set samples with the ones of the gallery samples
+# TODO: 1.Crop the face zone # STATUS: DONE
+# TODO: 2.Extract the characteristics from the face zone # STATUS: WHICH CHARACTERISTICS ?
+# TODO: 3.Compare the characteristics vectors of the probe set samples with the ones of the gallery samples # STATUS: ?
 
 def extract_faces_from_images():
-    # TODO : integrate this step in the main processus
-    print "step 1 : DO IT ONCE : Extract Faces from images and put in a dictionary " \
+    print "step 1 : DONE ONLY ONCE : Extract Faces from images and put in a dictionary " \
           "<label:name_of_face, value:path_to_face>, the dict is optionally"
     # extract all faces from images <do it just for the first time> : Done
     fd.face_extractor(imgsdir, cascPath, facesFolder)
@@ -76,7 +75,7 @@ def train_network(training_data, validation_data):
                                                 network=network,
                                                 validation_set=validation_data,
                                                 metric=['accuracy', 'recall@2'],
-                                                max_iterations=3)
+                                                max_iterations=20)
     return classifier
 
 
@@ -92,14 +91,15 @@ def get_face_name(element_path):
 def main():
     extract_faces_from_images()
     images_array = load_images_in_frame()
-    vis = gl.Sketch(images_array['Class'])
-    print vis
-    # data_set, test_data, training_data, validation_data = split_images_array(images_array)
-    # classifier = train_network(training_data, validation_data)
-    # print "step 5 : Classify Data with Test Set"
-    # # classify the test set and print predict
-    # pred = classifier.classify(test_data)
-    # print pred
+    # vis = gl.Sketch(images_array['Class'])
+    # print vis
+    data_set, test_data, training_data, validation_data = split_images_array(images_array)
+    classifier = train_network(training_data, validation_data)
+    print "step 5 : Classify Data with Test Set"
+    # classify the test set and print predict
+    print "3==================>"
+    pred = classifier.classify(test_data)
+    pred.save('data/training_data.json', format='json')
 
 
 if __name__ == '__main__':
