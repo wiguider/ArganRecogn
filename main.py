@@ -91,8 +91,8 @@ def get_face_name(element_path):
 def classify_and_save(classifier, test_data):
     print "step 5 : Classify Data with Test Set"
     # classify the test set and print predict
-    print "3==================>"
     pred = classifier.classify(test_data)
+    # Save to file
     pred.save('data/training_data.json', format='json')
 
 
