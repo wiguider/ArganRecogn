@@ -16,6 +16,7 @@ import graphlab as gl
 from docutils.nodes import image
 from FaceDetector import FaceDetector as fd
 import ConfigParser
+import os
 
 # Get user supplied values
 config = ConfigParser.ConfigParser()
@@ -75,7 +76,7 @@ def train_network(training_data, validation_data):
                                                 network=network,
                                                 validation_set=validation_data,
                                                 metric=['accuracy', 'recall@2'],
-                                                max_iterations=20)
+                                                max_iterations=3)
     return classifier
 
 
@@ -93,6 +94,8 @@ def classify_and_save(classifier, test_data):
     # classify the test set and print predict
     pred = classifier.classify(test_data)
     # Save to file
+    if not os.path.exists('data'):
+        os.makedirs('data')
     pred.save('data/training_data.json', format='json')
 
 
