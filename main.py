@@ -13,10 +13,12 @@
 ##################################################################################>>>>>
 
 import graphlab as gl
-from docutils.nodes import image
-from FaceDetector import FaceDetector as fd
 import ConfigParser
 import os
+
+from FaceDetector import FaceDetector as fd
+from DataProvider import Provider
+from  NeurNetEval import NetEval
 
 # Get user supplied values
 config = ConfigParser.ConfigParser()
@@ -24,6 +26,7 @@ config.read('config.ini')
 path = config.get('Paths', 'path')
 cascPath = config.get('Paths', 'cascPath')
 facesFolder = config.get('Paths', 'facesFolder')
+testset = config.get('Paths', 'testset')
 facesFolderTest = config.get('Paths', 'facesFolderTest')
 imgsdir = config.get('Paths', 'imgsdir')
 
@@ -35,7 +38,6 @@ imgsdir = config.get('Paths', 'imgsdir')
 def extract_faces_from_images():
     print "step 1 : DONE ONLY ONCE : Extract Faces from images and put in a dictionary " \
           "<label:name_of_face, value:path_to_face>, the dict is optionally"
-    # extract all faces from images <do it just for the first time> : Done
     fd.face_extractor(imgsdir, cascPath, facesFolder)
 
 
@@ -49,7 +51,23 @@ def load_images_in_frame():
                                                  ignore_failure=True)
     classes = []
     for element in images_array['path']:
-        classes.append(get_face_name(element))
+        classes.append(Provider.get_face_name(element))
+    # Columns :  path |   image | Class
+    images_array.add_column(gl.SArray(data=classes), name='Class')
+    images_array.remove_column('path')
+    return images_array
+
+def load_test_images_set():
+    print "step 2 : Load the facesTest in a Frame : <Image_brut,Its_Class>"
+    # load_images return an SFrame :  path |   image
+    images_array = gl.image_analysis.load_images(testset,
+                                                 "auto",
+                                                 with_path=True,
+                                                 recursive=True,
+                                                 ignore_failure=True)
+    classes = []
+    for element in images_array['path']:
+        classes.append(Provider.get_face_name(element))
     # Columns :  path |   image | Class
     images_array.add_column(gl.SArray(data=classes), name='Class')
     images_array.remove_column('path')
@@ -59,16 +77,17 @@ def load_images_in_frame():
 def split_images_array(images_array):
     print "step 3 : Spliting the Data to Traing set, Validation and Test Sets"
     # Creating test samples
-    dataset, test_data = images_array.random_split(0.75)
+    test_data = load_test_images_set()
     # Creating training samples
-    training_data, validation_data = dataset.random_split(0.8)
+    training_data, validation_data = images_array.random_split(0.8)
     # make sure that all faces have the same size
-    training_data['image'] = gl.image_analysis.resize(training_data['image'], 110, 110, 1, decode=True)
-    validation_data['image'] = gl.image_analysis.resize(validation_data['image'], 110, 110, 1, decode=True)
-    return dataset, test_data, training_data, validation_data
+    training_data['image'] = gl.image_analysis.resize(training_data['image'], 50, 50, 1, decode=True)
+    validation_data['image'] = gl.image_analysis.resize(validation_data['image'], 50, 50, 1, decode=True)
+    test_data['image'] = gl.image_analysis.resize(test_data['image'], 50, 50, 1, decode=True)
+    return test_data, training_data, validation_data
 
 
-def train_network(training_data, validation_data):
+def train_network(training_data, validation_data,nmbr_iter):
     print "step 4 : Create and Train Data with Training,validation sets"
     network = gl.deeplearning.create(training_data, target='Class')
     classifier = gl.neuralnet_classifier.create(training_data,
@@ -76,23 +95,15 @@ def train_network(training_data, validation_data):
                                                 network=network,
                                                 validation_set=validation_data,
                                                 metric=['accuracy', 'recall@2'],
-                                                max_iterations=3)
+                                                max_iterations=nmbr_iter)
     return classifier
-
-
-# TODO : make the main clean : put this method in another class
-def get_face_name(element_path):
-    list_split_strings = element_path.split('/')
-    face_name_num = list_split_strings[len(list_split_strings) - 1]
-    face_name_arr = face_name_num.split('_')
-    print face_name_num
-    return face_name_arr[0] + ' ' + face_name_arr[1]
 
 
 def classify_and_save(classifier, test_data):
     print "step 5 : Classify Data with Test Set"
     # classify the test set and print predict
     pred = classifier.classify(test_data)
+    print pred
     # Save to file
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -100,13 +111,20 @@ def classify_and_save(classifier, test_data):
 
 
 def main():
+    provider = Provider()
+    if os.path.exists(testset) == False:
+        provider.init(facesFolder)
+        provider.split_data(testset)
     extract_faces_from_images()
     images_array = load_images_in_frame()
-    # vis = gl.Sketch(images_array['Class'])
-    # print vis
-    data_set, test_data, training_data, validation_data = split_images_array(images_array)
-    classifier = train_network(training_data, validation_data)
+    print gl.Sketch(images_array['Class'])
+    test_data, training_data, validation_data = split_images_array(images_array)
+    classifier = train_network(training_data, validation_data,100)
     classify_and_save(classifier, test_data)
+    print "Evaluation" + classifier.evaluate(test_data)
+    #TODO: for face unique photos : sugg 1 : make an algo that browse in net for others imgs (hard but more points)
+    #TODO                           sugg 2 : copy/past the same img in test data (easy but not effiecent)
+
 
 
 if __name__ == '__main__':
