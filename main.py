@@ -57,6 +57,7 @@ def load_images_in_frame():
     images_array.remove_column('path')
     return images_array
 
+
 def load_test_images_set():
     print "step 2 : Load the facesTest in a Frame : <Image_brut,Its_Class>"
     # load_images return an SFrame :  path |   image
@@ -87,15 +88,27 @@ def split_images_array(images_array):
     return test_data, training_data, validation_data
 
 
-def train_network(training_data, validation_data,nmbr_iter):
+def train_network(training_data, validation_data, nmbr_iter):
     print "step 4 : Create and Train Data with Training,validation sets"
     network = gl.deeplearning.create(training_data, target='Class')
-    classifier = gl.neuralnet_classifier.create(training_data,
-                                                target='Class',
-                                                network=network,
-                                                validation_set=validation_data,
-                                                metric=['accuracy', 'recall@2'],
-                                                max_iterations=nmbr_iter)
+    # network.layers[6].num_hidden_units = 4455
+
+    # print network.verify(input_shape=[50, 50, 1], output_shape=4455)
+    # network.layers[6].num_hidden_units = 4456
+    try:
+        classifier = load_classifier()
+    except:
+        classifier = gl.neuralnet_classifier.create(training_data,
+                                                    target='Class',
+                                                    network=network,
+                                                    validation_set=validation_data,
+                                                    metric=['accuracy', 'recall@2'],
+                                                    max_iterations=nmbr_iter)
+    return classifier, network
+
+
+def load_classifier():
+    classifier = gl.deeplearning.load('data/classifier.conf')
     return classifier
 
 
@@ -107,24 +120,27 @@ def classify_and_save(classifier, test_data):
     # Save to file
     if not os.path.exists('data'):
         os.makedirs('data')
+    classifier.save('data/classifier.conf')
     pred.save('data/training_data.json', format='json')
 
 
 def main():
     provider = Provider()
-    if os.path.exists(testset) == False:
+    if not os.path.exists(testset):
         provider.init(facesFolder)
         provider.split_data(testset)
     extract_faces_from_images()
     images_array = load_images_in_frame()
     print gl.Sketch(images_array['Class'])
     test_data, training_data, validation_data = split_images_array(images_array)
-    classifier = train_network(training_data, validation_data,100)
+    classifier, network = train_network(training_data, validation_data, 3)
+    print classifier
+    network.save('data/mynet.conf')
     classify_and_save(classifier, test_data)
-    print "Evaluation" + classifier.evaluate(test_data)
-    #TODO: for face unique photos : sugg 1 : make an algo that browse in net for others imgs (hard but more points)
-    #TODO                           sugg 2 : copy/past the same img in test data (easy but not effiecent)
-
+    print "Evaluation"
+    print classifier.evaluate(test_data)
+    # TODO: for face unique photos : sugg 1 : make an algo that browse in net for others imgs (hard but more points)
+    # TODO                           sugg 2 : copy/past the same img in test data (easy but not effiecent)
 
 
 if __name__ == '__main__':
