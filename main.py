@@ -14,11 +14,16 @@
 
 import graphlab as gl
 import ConfigParser
+import sys
 import os
 
 from FaceDetector import FaceDetector as fd
 from DataProvider import Provider
 from  NeurNetEval import NetEval
+from QDataViewer import *
+from PyQt4 import QtCore , QtGui
+
+
 
 # Get user supplied values
 config = ConfigParser.ConfigParser()
@@ -118,23 +123,36 @@ def classify_and_save(classifier, test_data):
         os.makedirs('data')
     pred.save('data/training_data.json', format='json')
 
+def image_to_sframe():
+    print graphlab.image_analysis.load_images(facesFolderTest,
+                                                 "auto",
+                                                 with_path=True,
+                                                 recursive=False)
+    #it ll be executed after click on "toSframe" button
 
 def main():
+
      provider = Provider()
-     provider.init(facesFolder)
-     provider.split_data(testset)
-     provider.donwload_imagesToUniquePeople(images_google)
-     extract_faces_from_images()
-     images_array = load_images_in_frame()
-     print gl.Sketch(images_array['Class'])
-     test_data, training_data, validation_data = split_images_array(images_array)
-     classifier, network = train_network(training_data, validation_data,300)
-     print classifier
-     #network.save('data/mynet.conf')
-     classify_and_save(classifier, test_data)
-     print "Evaluation"
-     print  classifier.evaluate(test_data)
+     # provider.init(facesFolder)
+     # provider.split_data(testset)
+     # provider.donwload_imagesToUniquePeople(images_google)
+     # extract_faces_from_images()
+     # images_array = load_images_in_frame()
+     # print gl.Sketch(images_array['Class'])
+     # test_data, training_data, validation_data = split_images_array(images_array)
+     # classifier, network = train_network(training_data, validation_data,300)
+     # print classifier
+     # #network.save('data/mynet.conf')
+     # classify_and_save(classifier, test_data)
+     # print "Evaluation"
+     # print  classifier.evaluate(test_data)
 
 
 if __name__ == '__main__':
+    app = QtGui.QApplication(sys.argv)
+    mw = QDataViewer(facesFolderTest)
+    mw.sframe_action(image_to_sframe)
+    mw.show()
     main()
+    sys.exit(app.exec_())
+
