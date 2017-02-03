@@ -14,11 +14,16 @@
 
 import graphlab as gl
 import ConfigParser
+import sys
 import os
 
 from FaceDetector import FaceDetector as fd
 from DataProvider import Provider
 from  NeurNetEval import NetEval
+from QDataViewer import *
+from PyQt4 import QtCore , QtGui
+
+
 
 # Get user supplied values
 config = ConfigParser.ConfigParser()
@@ -27,19 +32,17 @@ path = config.get('Paths', 'path')
 cascPath = config.get('Paths', 'cascPath')
 facesFolder = config.get('Paths', 'facesFolder')
 testset = config.get('Paths', 'testset')
+images_google = config.get('Paths', 'images_google')
 facesFolderTest = config.get('Paths', 'facesFolderTest')
 imgsdir = config.get('Paths', 'imgsdir')
 
 
-# TODO: 1.Crop the face zone # STATUS: DONE
-# TODO: 2.Extract the characteristics from the face zone # STATUS: WHICH CHARACTERISTICS ?
-# TODO: 3.Compare the characteristics vectors of the probe set samples with the ones of the gallery samples # STATUS: ?
 
 def extract_faces_from_images():
     print "step 1 : DONE ONLY ONCE : Extract Faces from images and put in a dictionary " \
           "<label:name_of_face, value:path_to_face>, the dict is optionally"
     fd.face_extractor(imgsdir, cascPath, facesFolder)
-
+    fd.face_extractor_google(images_google,cascPath,facesFolder)
 
 def load_images_in_frame():
     print "step 2 : Load the faces in a Frame : <Image_brut,Its_Class>"
@@ -56,7 +59,6 @@ def load_images_in_frame():
     images_array.add_column(gl.SArray(data=classes), name='Class')
     images_array.remove_column('path')
     return images_array
-
 
 def load_test_images_set():
     print "step 2 : Load the facesTest in a Frame : <Image_brut,Its_Class>"
@@ -111,7 +113,6 @@ def load_classifier():
     classifier = gl.deeplearning.load('data/classifier.conf')
     return classifier
 
-
 def classify_and_save(classifier, test_data):
     print "step 5 : Classify Data with Test Set"
     # classify the test set and print predict
@@ -120,28 +121,38 @@ def classify_and_save(classifier, test_data):
     # Save to file
     if not os.path.exists('data'):
         os.makedirs('data')
-    classifier.save('data/classifier.conf')
     pred.save('data/training_data.json', format='json')
 
+def image_to_sframe():
+    print graphlab.image_analysis.load_images(facesFolderTest,
+                                                 "auto",
+                                                 with_path=True,
+                                                 recursive=False)
+    #it ll be executed after click on "toSframe" button
 
 def main():
-    provider = Provider()
-    if not os.path.exists(testset):
-        provider.init(facesFolder)
-        provider.split_data(testset)
-    extract_faces_from_images()
-    images_array = load_images_in_frame()
-    print gl.Sketch(images_array['Class'])
-    test_data, training_data, validation_data = split_images_array(images_array)
-    classifier, network = train_network(training_data, validation_data, 3)
-    print classifier
-    network.save('data/mynet.conf')
-    classify_and_save(classifier, test_data)
-    print "Evaluation"
-    print classifier.evaluate(test_data)
-    # TODO: for face unique photos : sugg 1 : make an algo that browse in net for others imgs (hard but more points)
-    # TODO                           sugg 2 : copy/past the same img in test data (easy but not effiecent)
+
+     provider = Provider()
+     # provider.init(facesFolder)
+     # provider.split_data(testset)
+     # provider.donwload_imagesToUniquePeople(images_google)
+     # extract_faces_from_images()
+     # images_array = load_images_in_frame()
+     # print gl.Sketch(images_array['Class'])
+     # test_data, training_data, validation_data = split_images_array(images_array)
+     # classifier, network = train_network(training_data, validation_data,300)
+     # print classifier
+     # #network.save('data/mynet.conf')
+     # classify_and_save(classifier, test_data)
+     # print "Evaluation"
+     # print  classifier.evaluate(test_data)
 
 
 if __name__ == '__main__':
+    app = QtGui.QApplication(sys.argv)
+    mw = QDataViewer(facesFolderTest)
+    mw.sframe_action(image_to_sframe)
+    mw.show()
     main()
+    sys.exit(app.exec_())
+
