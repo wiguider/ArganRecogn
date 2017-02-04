@@ -1,7 +1,7 @@
 import shutil
 from os import walk
 from os import path
-from GoogleImageBridge import ImageProvider
+from ImageProvider import ImageProvider
 
 
 class Provider:
@@ -49,10 +49,10 @@ class Provider:
                 if path.exists(self.faces_path + suffix):
                     shutil.copy(self.faces_path + suffix, testset + suffix)
 
-    def donwload_imagesToUniquePeople(self, images_google):
+    def download_missing_images(self, images_google):
         if not path.exists(images_google):
             for l in self.oneListPersons:
-                ImageProvider().getImagesFromGoogle(l, 3)
+                ImageProvider().get_images_from_google(l, 3)
 
     @staticmethod
     def get_face_name(element_path):
