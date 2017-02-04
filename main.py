@@ -17,13 +17,12 @@ import ConfigParser
 import sys
 import os
 
+from shutil import copyfile
 from FaceDetector import FaceDetector as fd
 from DataProvider import Provider
 from  NeurNetEval import NetEval
 from QDataViewer import *
-from PyQt4 import QtCore , QtGui
-
-
+from PyQt4 import QtCore, QtGui
 
 # Get user supplied values
 config = ConfigParser.ConfigParser()
@@ -37,12 +36,12 @@ facesFolderTest = config.get('Paths', 'facesFolderTest')
 imgsdir = config.get('Paths', 'imgsdir')
 
 
-
 def extract_faces_from_images():
     print "step 1 : DONE ONLY ONCE : Extract Faces from images and put in a dictionary " \
           "<label:name_of_face, value:path_to_face>, the dict is optionally"
     fd.face_extractor(imgsdir, cascPath, facesFolder)
-    fd.face_extractor_google(images_google,cascPath,facesFolder)
+    fd.face_extractor_google(images_google, cascPath, facesFolder)
+
 
 def load_images_in_frame():
     print "step 2 : Load the faces in a Frame : <Image_brut,Its_Class>"
@@ -59,6 +58,7 @@ def load_images_in_frame():
     images_array.add_column(gl.SArray(data=classes), name='Class')
     images_array.remove_column('path')
     return images_array
+
 
 def load_test_images_set():
     print "step 2 : Load the facesTest in a Frame : <Image_brut,Its_Class>"
@@ -93,10 +93,6 @@ def split_images_array(images_array):
 def train_network(training_data, validation_data, nmbr_iter):
     print "step 4 : Create and Train Data with Training,validation sets"
     network = gl.deeplearning.create(training_data, target='Class')
-    # network.layers[6].num_hidden_units = 4455
-
-    # print network.verify(input_shape=[50, 50, 1], output_shape=4455)
-    # network.layers[6].num_hidden_units = 4456
     try:
         classifier = load_classifier()
     except:
@@ -113,6 +109,7 @@ def load_classifier():
     classifier = gl.deeplearning.load('data/classifier.conf')
     return classifier
 
+
 def classify_and_save(classifier, test_data):
     print "step 5 : Classify Data with Test Set"
     # classify the test set and print predict
@@ -123,36 +120,53 @@ def classify_and_save(classifier, test_data):
         os.makedirs('data')
     pred.save('data/training_data.json', format='json')
 
+
 def image_to_sframe():
-    print graphlab.image_analysis.load_images(facesFolderTest,
+    images_array = gl.image_analysis.load_images(facesFolderTest,
                                                  "auto",
                                                  with_path=True,
                                                  recursive=False)
-    #it ll be executed after click on "toSframe" button
+    classes = []
+    for element in images_array['path']:
+        classes.append(Provider.get_face_name(element))
+    # Columns :  path |   image | Class
+    images_array.add_column(gl.SArray(data=classes), name='Class')
+    images_array.remove_column('path')
+    print images_array
+    # it ll be executed after click on "toSframe" button
+
+
+def get_missing_images():
+    provider = Provider(facesFolder)
+    provider.split_data(testset)
+    provider.donwload_imagesToUniquePeople(images_google)
+
+
+def train_classify_nn():
+    get_missing_images()
+    extract_faces_from_images()
+    images_array = load_images_in_frame()
+    print gl.Sketch(images_array['Class'])
+    test_data, training_data, validation_data = split_images_array(images_array)
+    classifier, network = train_network(training_data, validation_data, 300)
+    print classifier
+    classify_and_save(classifier, test_data)
+    print "Evaluation"
+    print classifier.evaluate(test_data)
+
 
 def main():
+    app = QtGui.QApplication(sys.argv)
+    mw = QDataViewer(facesFolderTest)
+    layout = QtGui.QHBoxLayout()
 
-     provider = Provider()
-     # provider.init(facesFolder)
-     # provider.split_data(testset)
-     # provider.donwload_imagesToUniquePeople(images_google)
-     # extract_faces_from_images()
-     # images_array = load_images_in_frame()
-     # print gl.Sketch(images_array['Class'])
-     # test_data, training_data, validation_data = split_images_array(images_array)
-     # classifier, network = train_network(training_data, validation_data,300)
-     # print classifier
-     # #network.save('data/mynet.conf')
-     # classify_and_save(classifier, test_data)
-     # print "Evaluation"
-     # print  classifier.evaluate(test_data)
+    mw.add_button_upload('UPLOAD', layout)
+    mw.add_button('To SFrame', image_to_sframe, layout)
+    mw.add_button('TRAIN', train_classify_nn, layout)
+    mw.setLayout(layout)
+    mw.show()
+    sys.exit(app.exec_())
 
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
-    mw = QDataViewer(facesFolderTest)
-    mw.sframe_action(image_to_sframe)
-    mw.show()
     main()
-    sys.exit(app.exec_())
-

@@ -3,7 +3,6 @@ import os
 
 
 class FaceDetector:
-
     @staticmethod
     def get_face_from_image(imagePath, cascPath):
         # Create the har cascade
@@ -55,15 +54,15 @@ class FaceDetector:
         for (dirpath, dirnames, filenames) in os.walk(images_google):
             for filename in filenames:
                 if len(filename) > 0:
-                        pathimg = images_google + '/' + filename
-                        crop_img = None
-                        try:
-                            crop_img = FaceDetector.get_face_from_image(pathimg, cascPath)
-                        except:
-                            print "Can't load the image: path wrong"
-                        if crop_img is not None:
-                            imgNameSpliting = pathimg.split('/')
-                            faceName = imgNameSpliting[len(imgNameSpliting) - 1]
-                            cv2.imwrite(os.path.join(facesFolder, faceName), crop_img)
-                        else:
-                            print "Face Null => can't be save "
+                    pathimg = images_google + '/' + filename
+                    crop_img = None
+                    try:
+                        crop_img = FaceDetector.get_face_from_image(pathimg, cascPath)
+                    except:
+                        print "Can't load the image: path wrong"
+                    if crop_img is not None:
+                        imgNameSpliting = pathimg.split('/')
+                        faceName = imgNameSpliting[len(imgNameSpliting) - 1]
+                        cv2.imwrite(os.path.join(facesFolder, faceName), crop_img)
+                    else:
+                        print "Face Null => can't be save "
