@@ -30,7 +30,9 @@ from NeurNetEval import NetEval
 
 from QDataViewer import *
 
-from PyQt4 import QtCore, QtGui
+from PyQt4.QtGui import *
+
+from PyQt4.QtCore import *
 
 # Paths properties
 config = ConfigParser.ConfigParser()
@@ -52,92 +54,119 @@ metric = config.get('Net', 'metric').split(',')
 def extract_faces_from_images():
     print "step 1 : DONE ONLY ONCE : Extract Faces from images and put in a dictionary " \
           "<label:name_of_face, value:path_to_face>, the dict is optionally"
-    fd.face_extractor(imgsdir, cascPath, facesFolder)
-    fd.face_extractor_google(images_google, cascPath, facesFolder)
+    try:
+        fd.face_extractor(imgsdir, cascPath, facesFolder)
+        fd.face_extractor_google(images_google, cascPath, facesFolder)
+    except:
+        show_dialog()
 
 
 def load_images(images_folder):
     print "step 2 : Load the faces in a Frame : <Image_brut,Its_Class>"
     # load_images return an SFrame :  path |   image
-    images_array = gl.image_analysis.load_images(images_folder,
-                                                 "auto",
-                                                 with_path=True,
-                                                 recursive=True,
-                                                 ignore_failure=True)
-    classes = []
-    for element in images_array['path']:
-        classes.append(Provider.get_face_name(element))
-    # Columns :  path |   image | Class
-    images_array.add_column(gl.SArray(data=classes), name='Class')
-    images_array.remove_column('path')
-    return images_array
+    try:
+        images_array = gl.image_analysis.load_images(images_folder,
+                                                     "auto",
+                                                     with_path=True,
+                                                     recursive=True,
+                                                     ignore_failure=True)
+        classes = []
+        for element in images_array['path']:
+            classes.append(Provider.get_face_name(element))
+        # Columns :  path |   image | Class
+        images_array.add_column(gl.SArray(data=classes), name='Class')
+        images_array.remove_column('path')
+        return images_array
+    except:
+        show_dialog()
 
 
 def split_images_array(images_array):
     print "step 3 : Splitting the Data to Traing set, Validation and Test Sets"
-    # Creating test samples
-    test_data = load_images(testset)
-    # Creating training samples
-    training_data, validation_data = images_array.random_split(0.8)
-    # make sure that all faces have the same size
-    training_data['image'] = gl.image_analysis.resize(training_data['image'], 50, 50, 1, decode=True)
-    validation_data['image'] = gl.image_analysis.resize(validation_data['image'], 50, 50, 1, decode=True)
-    test_data['image'] = gl.image_analysis.resize(test_data['image'], 50, 50, 1, decode=True)
-    return test_data, training_data, validation_data
+    try:
+        # Creating test samples
+        test_data = load_images(testset)
+        # Creating training samples
+        training_data, validation_data = images_array.random_split(0.8)
+        # make sure that all faces have the same size
+        training_data['image'] = gl.image_analysis.resize(training_data['image'], 50, 50, 1, decode=True)
+        validation_data['image'] = gl.image_analysis.resize(validation_data['image'], 50, 50, 1, decode=True)
+        test_data['image'] = gl.image_analysis.resize(test_data['image'], 50, 50, 1, decode=True)
+        return test_data, training_data, validation_data
+    except:
+        show_dialog()
 
 
 def train_network(training_data, validation_data):
     print "step 4 : Create and Train Data with Training,validation sets"
-    network = gl.deeplearning.create(training_data, target=target)
     try:
-        classifier = load_classifier()
+        network = gl.deeplearning.create(training_data, target=target)
+        try:
+            classifier = load_classifier()
+        except:
+            classifier = gl.neuralnet_classifier.create(training_data,
+                                                        target=target,
+                                                        network=network,
+                                                        validation_set=validation_data,
+                                                        metric=metric,
+                                                        max_iterations=max_iterations)
+        return classifier, network
     except:
-        classifier = gl.neuralnet_classifier.create(training_data,
-                                                    target=target,
-                                                    network=network,
-                                                    validation_set=validation_data,
-                                                    metric=metric,
-                                                    max_iterations=max_iterations)
-    return classifier, network
+        show_dialog()
 
 
 def load_classifier():
-    return gl.deeplearning.load('data/classifier.conf')
+    try:
+        return gl.deeplearning.load('data/classifier.conf')
+    except:
+        show_dialog()
 
 
 def classify_and_save(classifier, test_data):
     print "step 5 : Classify Data with Test Set"
     # classify the test set and print predict
-    pred = classifier.classify(test_data)
-    print pred
-    # Save to file
-    if not os.path.exists('data'):
-        os.makedirs('data')
-    pred.save('data/training_data.json', format='json')
+    try:
+        pred = classifier.classify(test_data)
+        print pred
+        # Save to file
+        if not os.path.exists('data'):
+            os.makedirs('data')
+        pred.save('data/training_data.json', format='json')
+    except:
+        show_dialog()
 
 
 def image_to_sframe():
-    print load_images(facesFolderTest)
-    # it ll be executed after click on "toSframe" button
+    try:
+        print load_images(facesFolderTest)
+        # it ll be executed after click on "toSframe" button
+    except:
+        show_dialog()
 
 
 def get_missing_images():
-    provider = Provider(facesFolder)
-    provider.split_data(testset)
-    provider.download_missing_images(images_google)
+    try:
+        provider = Provider(facesFolder)
+        provider.split_data(testset)
+        provider.download_missing_images(images_google)
+    except:
+        show_dialog()
 
 
 def train_classify_network():
-    get_missing_images()
-    extract_faces_from_images()
-    images_array = load_images(facesFolder)
-    print gl.Sketch(images_array['Class'])
-    test_data, training_data, validation_data = split_images_array(images_array)
-    classifier, network = train_network(training_data, validation_data)
-    print classifier
-    classify_and_save(classifier, test_data)
-    print "Evaluation"
-    print classifier.evaluate(test_data)
+    try:
+        get_missing_images()
+        extract_faces_from_images()
+        images_array = load_images(facesFolder)
+        print gl.Sketch(images_array['Class'])
+        test_data, training_data, validation_data = split_images_array(images_array)
+        classifier, network = train_network(training_data, validation_data)
+        print classifier
+        classify_and_save(classifier, test_data)
+        print "Evaluation"
+        print classifier.evaluate(test_data)
+    except:
+        show_dialog()
 
 
 def build_gui():
@@ -150,6 +179,25 @@ def build_gui():
     mw.setLayout(layout)
     mw.show()
     sys.exit(app.exec_())
+
+
+def show_dialog():
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Information)
+
+    msg.setText("This is a message box")
+    msg.setInformativeText("This is additional information")
+    msg.setWindowTitle("MessageBox demo")
+    msg.setDetailedText("The details are as follows:")
+    msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+    msg.buttonClicked.connect(msgbtn)
+
+    retval = msg.exec_()
+    print "value of pressed message box button:", retval
+
+
+def msgbtn(i):
+    print "Button pressed is:", i.text()
 
 
 def main():
