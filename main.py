@@ -57,8 +57,8 @@ def extract_faces_from_images():
     try:
         fd.face_extractor(imgsdir, cascPath, facesFolder)
         fd.face_extractor_google(images_google, cascPath, facesFolder)
-    except:
-        show_dialog()
+    except Exception as e:
+        show_dialog(e)
 
 
 def load_images(images_folder):
@@ -77,8 +77,8 @@ def load_images(images_folder):
         images_array.add_column(gl.SArray(data=classes), name='Class')
         images_array.remove_column('path')
         return images_array
-    except:
-        show_dialog()
+    except Exception as e:
+        show_dialog(e)
 
 
 def split_images_array(images_array):
@@ -93,8 +93,8 @@ def split_images_array(images_array):
         validation_data['image'] = gl.image_analysis.resize(validation_data['image'], 50, 50, 1, decode=True)
         test_data['image'] = gl.image_analysis.resize(test_data['image'], 50, 50, 1, decode=True)
         return test_data, training_data, validation_data
-    except:
-        show_dialog()
+    except Exception as e:
+        show_dialog(e)
 
 
 def train_network(training_data, validation_data):
@@ -103,7 +103,7 @@ def train_network(training_data, validation_data):
         network = gl.deeplearning.create(training_data, target=target)
         try:
             classifier = load_classifier()
-        except:
+        except Exception as e:
             classifier = gl.neuralnet_classifier.create(training_data,
                                                         target=target,
                                                         network=network,
@@ -111,15 +111,17 @@ def train_network(training_data, validation_data):
                                                         metric=metric,
                                                         max_iterations=max_iterations)
         return classifier, network
-    except:
-        show_dialog()
+    except Exception as e:
+        show_dialog(e)
 
 
 def load_classifier():
     try:
-        return gl.deeplearning.load('data/classifier.conf')
-    except:
-        show_dialog()
+        classifier = gl.deeplearning.load('data/classifier.conf')
+        return classifier
+    except Exception as e:
+        print e.message
+        show_dialog(e)
 
 
 def classify_and_save(classifier, test_data):
@@ -132,16 +134,16 @@ def classify_and_save(classifier, test_data):
         if not os.path.exists('data'):
             os.makedirs('data')
         pred.save('data/training_data.json', format='json')
-    except:
-        show_dialog()
+    except Exception as e:
+        show_dialog(e)
 
 
 def image_to_sframe():
     try:
         print load_images(facesFolderTest)
         # it ll be executed after click on "toSframe" button
-    except:
-        show_dialog()
+    except Exception as e:
+        show_dialog(e)
 
 
 def get_missing_images():
@@ -149,8 +151,8 @@ def get_missing_images():
         provider = Provider(facesFolder)
         provider.split_data(testset)
         provider.download_missing_images(images_google)
-    except:
-        show_dialog()
+    except Exception as e:
+        show_dialog(e)
 
 
 def train_classify_network():
@@ -165,8 +167,9 @@ def train_classify_network():
         classify_and_save(classifier, test_data)
         print "Evaluation"
         print classifier.evaluate(test_data)
-    except:
-        show_dialog()
+        classifier.save('data/classifier.conf')
+    except Exception as e:
+        show_dialog(e)
 
 
 def build_gui():
@@ -181,14 +184,16 @@ def build_gui():
     sys.exit(app.exec_())
 
 
-def show_dialog():
+def show_dialog(exception):
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Information)
 
-    msg.setText("This is a message box")
-    msg.setInformativeText("This is additional information")
-    msg.setWindowTitle("MessageBox demo")
-    msg.setDetailedText("The details are as follows:")
+    msg.setText("Something wrong occurred")
+    msg.setInformativeText("Additional information")
+    msg.setWindowTitle("Something wrong occurred")
+    msg.setIcon("Warning")
+    msg.setDetailedText("The details are as follows:\n" + exception.message)
+    print "The details are as follows:\n" + exception.message
     msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
     msg.buttonClicked.connect(msgbtn)
 

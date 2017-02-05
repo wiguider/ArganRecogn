@@ -52,7 +52,7 @@ class ImageProvider:
 
     # Finding 'Next Image' from the given raw page
     @staticmethod
-    def images_get_next_item(self, s):
+    def images_get_next_item(s):
         start_line = s.find('rg_di')
         if start_line == -1:  # If no links are found then give an error!
             end_quote = 0
@@ -149,7 +149,7 @@ class ImageProvider:
                         "User-Agent": "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.17 (KHTML, like Gecko) "
                                       "Chrome/24.0.1312.27 Safari/537.17"})
                     response = urlopen(req)
-                    output_file = open("images_google/" + temp_name + "000" + str(k + 2) + ".jpg", 'wb')
+                    output_file = open("images_google/" + temp_name + "_000" + str(k + 2) + ".jpg", 'wb')
                     data = response.read()
                     output_file.write(data)
                     response.close()
@@ -157,9 +157,10 @@ class ImageProvider:
                     number_of_images -= 1
                     k += 1
                 break
-            except IOError:  # If there is any IOError
+            except IOError as e:  # If there is any IOError
                 error_count += 1
                 print("IOError on image " + str(k + 1))
+                print e
                 k += 1
             except HTTPError as e:  # If there is any HTTPError
                 error_count += 1
