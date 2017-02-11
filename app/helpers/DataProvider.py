@@ -1,10 +1,17 @@
 import shutil
-from os import walk
+
 from os import path
-from ImageProvider import ImageProvider
+
+from os import walk
+
+from os import unlink
+
+from os import listdir
+
+from app.helpers.ImageProvider import ImageProvider
 
 
-class Provider:
+class DataProvider:
     all_images = []
     face_nbrImage = dict()
     faces_path = None
@@ -12,12 +19,12 @@ class Provider:
 
     def __init__(self, faces_path=""):
         self.faces_path = faces_path
-        for (dirpath, dirnames, filenames) in walk(self.faces_path):
-            self.all_images.extend(filenames)
+        for (dir_path, dir_names, file_names) in walk(self.faces_path):
+            self.all_images.extend(file_names)
             break
         # counting face <-> number of this face
         for image in self.all_images:
-            face_name = Provider.get_face_name(image)
+            face_name = DataProvider.get_face_name(image)
             if face_name in self.face_nbrImage.keys():
                 self.face_nbrImage[face_name] += 1
             else:
@@ -36,7 +43,7 @@ class Provider:
             for face in self.face_nbrImage:
                 if self.face_nbrImage[face] > 1:
                     for image in self.all_images:
-                        nom = Provider.get_face_name(image)
+                        nom = DataProvider.get_face_name(image)
                         if face == nom:
                             suffix = nom + "0001.jpg"
                             if path.exists(self.faces_path + suffix):
@@ -49,10 +56,20 @@ class Provider:
                 if path.exists(self.faces_path + suffix):
                     shutil.copy(self.faces_path + suffix, testset + suffix)
 
-    def download_missing_images(self, images_google):
-        if not path.exists(images_google):
+    def download_missing_images(self, images_web):
+        if not path.exists(images_web):
             for l in self.oneListPersons:
-                ImageProvider().get_images_from_google(l, 3)
+                ImageProvider().get_images_from_web(l, 3)
+
+    @staticmethod
+    def empty_folder(folder):
+        for the_file in listdir(folder):
+            file_path = path.join(folder, the_file)
+            try:
+                if path.isfile(file_path):
+                    unlink(file_path)
+            except Exception as e:
+                print(e)
 
     @staticmethod
     def get_face_name(element_path):

@@ -8,6 +8,9 @@ import urllib2
 class ImageProvider:
     # This list is used to search keywords. You can edit this list to search for google images of your choice.
     #  You can simply add and remove elements of the list.
+    def __init__(self):
+        pass
+
     search_keyword = ['']
     # This list is used to further add suffix to your search term.
     # Each element of the list will help you download 100 images.
@@ -87,7 +90,7 @@ class ImageProvider:
         return name
 
     # TODO : give the path in argument
-    def get_images_from_google(self, nameOfPerson, number_of_images):
+    def get_images_from_web(self, name_of_person, number_of_images):
         ############## Main Program ############
         t0 = time.time()  # start the timer
         # Download Image Links
@@ -100,9 +103,9 @@ class ImageProvider:
             search_keywords = self.search_keyword[i]
             search = search_keywords.replace(' ', '%20')
             j = 0
-            temp_name = nameOfPerson[0]
-            nameOfPerson[0] = self.get_as_name_as(nameOfPerson[0])
-            self.keywords = nameOfPerson
+            temp_name = name_of_person[0]
+            name_of_person[0] = self.get_as_name_as(name_of_person[0])
+            self.keywords = name_of_person
             while j < len(self.keywords):
                 pure_keyword = self.keywords[j].replace(' ', '%20')
                 url = 'https://www.google.com/search?q=' + search + pure_keyword \
@@ -120,13 +123,11 @@ class ImageProvider:
             # This allows you to write all the links into a test file.
             # This text file will be created in the same directory as your code.
             # You can comment out the below 3 lines to stop writing the output to the text file.
-            info = open('output.txt', 'a')  # Open the text file called database.txt
+            # info = open('output.txt', 'a')  # Open the text file called database.txt
             # Write the title of the page
-            info.write(
-                str(i) + ': ' + str(self.search_keyword[i - 1]) + ": " + str(
-                    items) + "\n\n\n")
+            # info.write(str(i) + ': ' + str(self.search_keyword[i - 1]) + ": " + str(items) + "\n\n\n")
             # Close the file
-            info.close()
+            # info.close()
             # stop the timer
         t1 = time.time()
         # Calculating the total time required to crawl,

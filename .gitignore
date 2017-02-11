@@ -1,0 +1,12 @@
+
+.DS_Store
+.idea/frbs.iml
+.idea/jsLibraryMappings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/workspace.xml
+Test/
+data/
+faces/
+images_google/
+testset/

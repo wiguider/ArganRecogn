@@ -12,38 +12,27 @@
 # 5 Present Results
 ##################################################################################>>>>>
 
-import graphlab as gl
-
 import ConfigParser
-
+import os
 import sys
 
-import os
-
-from shutil import copyfile
-
-from FaceDetector import FaceDetector as fd
-
-from DataProvider import Provider
-
-from NeurNetEval import NetEval
-
-from QDataViewer import *
-
+import graphlab as gl
 from PyQt4.QtGui import *
 
-from PyQt4.QtCore import *
+from app.helpers.FaceDetector import FaceDetector as fd
+from app.ui.QDataViewer import *
 
 # Paths properties
 config = ConfigParser.ConfigParser()
 config.read('config.ini')
-path = config.get('Paths', 'path')
+path = os.getcwd()
 cascPath = config.get('Paths', 'cascPath')
 facesFolder = config.get('Paths', 'facesFolder')
 testset = config.get('Paths', 'testset')
 images_google = config.get('Paths', 'images_google')
 facesFolderTest = config.get('Paths', 'facesFolderTest')
 imgsdir = config.get('Paths', 'imgsdir')
+classifier_path = config.get('Paths', 'classifier_path')
 
 # Network properties
 max_iterations = config.get('Net', 'max_iterations')
@@ -58,7 +47,7 @@ def extract_faces_from_images():
         fd.face_extractor(imgsdir, cascPath, facesFolder)
         fd.face_extractor_google(images_google, cascPath, facesFolder)
     except Exception as e:
-        show_dialog(e)
+        QDataViewer.show_dialog(e)
 
 
 def load_images(images_folder):
@@ -72,13 +61,13 @@ def load_images(images_folder):
                                                      ignore_failure=True)
         classes = []
         for element in images_array['path']:
-            classes.append(Provider.get_face_name(element))
+            classes.append(DataProvider.get_face_name(element))
         # Columns :  path |   image | Class
         images_array.add_column(gl.SArray(data=classes), name='Class')
         images_array.remove_column('path')
         return images_array
     except Exception as e:
-        show_dialog(e)
+        QDataViewer.show_dialog("ERROR : Load the faces in a Frame ")
 
 
 def split_images_array(images_array):
@@ -94,16 +83,17 @@ def split_images_array(images_array):
         test_data['image'] = gl.image_analysis.resize(test_data['image'], 50, 50, 1, decode=True)
         return test_data, training_data, validation_data
     except Exception as e:
-        show_dialog(e)
+        QDataViewer.show_dialog(e)
 
 
 def train_network(training_data, validation_data):
     print "step 4 : Create and Train Data with Training,validation sets"
     try:
         network = gl.deeplearning.create(training_data, target=target)
-        try:
+
+        if os.path.exists("data/classifier.conf"):
             classifier = load_classifier()
-        except Exception as e:
+        else:
             classifier = gl.neuralnet_classifier.create(training_data,
                                                         target=target,
                                                         network=network,
@@ -112,16 +102,19 @@ def train_network(training_data, validation_data):
                                                         max_iterations=max_iterations)
         return classifier, network
     except Exception as e:
-        show_dialog(e)
+        QDataViewer.show_dialog(e)
 
 
 def load_classifier():
     try:
-        classifier = gl.deeplearning.load('data/classifier.conf')
-        return classifier
+        if os.path.exists("data/classifier.conf"):
+            print "> load_classifier"
+            classifier = gl.load_model('data/classifier.conf')
+            return classifier
     except Exception as e:
+        print "ERROR : load_classifier"
         print e.message
-        show_dialog(e)
+        QDataViewer.show_dialog(e)
 
 
 def classify_and_save(classifier, test_data):
@@ -133,26 +126,31 @@ def classify_and_save(classifier, test_data):
         # Save to file
         if not os.path.exists('data'):
             os.makedirs('data')
-        pred.save('data/training_data.json', format='json')
+        classifier.save('data/classifier.conf')
     except Exception as e:
-        show_dialog(e)
+        QDataViewer.show_dialog(e)
 
 
-def image_to_sframe():
+def evaluate_image():
     try:
-        print load_images(facesFolderTest)
+        images_array = load_images(facesFolderTest)
+        images_array['image'] = gl.image_analysis.resize(images_array['image'], 50, 50, 1, decode=True)
+        print images_array
+        classifier = load_classifier()
+        classifier.classify(images_array)
+        print classifier.evaluate(images_array)
         # it ll be executed after click on "toSframe" button
     except Exception as e:
-        show_dialog(e)
+        QDataViewer.show_dialog(e)
 
 
 def get_missing_images():
     try:
-        provider = Provider(facesFolder)
+        provider = DataProvider(facesFolder)
         provider.split_data(testset)
         provider.download_missing_images(images_google)
     except Exception as e:
-        show_dialog(e)
+        QDataViewer.show_dialog(e)
 
 
 def train_classify_network():
@@ -167,9 +165,11 @@ def train_classify_network():
         classify_and_save(classifier, test_data)
         print "Evaluation"
         print classifier.evaluate(test_data)
+
         classifier.save('data/classifier.conf')
+        network.save("data/net.conf")
     except Exception as e:
-        show_dialog(e)
+        QDataViewer.show_dialog(e)
 
 
 def build_gui():
@@ -177,32 +177,11 @@ def build_gui():
     mw = QDataViewer(facesFolderTest)
     layout = QtGui.QHBoxLayout()
     mw.add_button_upload('UPLOAD', layout)
-    mw.add_button('To SFrame', image_to_sframe, layout)
+    mw.add_button('EVALUATE', evaluate_image, layout)
     mw.add_button('TRAIN', train_classify_network, layout)
     mw.setLayout(layout)
     mw.show()
     sys.exit(app.exec_())
-
-
-def show_dialog(exception):
-    msg = QMessageBox()
-    msg.setIcon(QMessageBox.Information)
-
-    msg.setText("Something wrong occurred")
-    msg.setInformativeText("Additional information")
-    msg.setWindowTitle("Something wrong occurred")
-    msg.setIcon("Warning")
-    msg.setDetailedText("The details are as follows:\n" + exception.message)
-    print "The details are as follows:\n" + exception.message
-    msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-    msg.buttonClicked.connect(msgbtn)
-
-    retval = msg.exec_()
-    print "value of pressed message box button:", retval
-
-
-def msgbtn(i):
-    print "Button pressed is:", i.text()
 
 
 def main():

@@ -3,6 +3,9 @@ import os
 
 
 class FaceDetector:
+    def __init__(self):
+        pass
+
     @staticmethod
     def get_face_from_image(imagePath, cascPath):
         # Create the har cascade
