@@ -21,7 +21,7 @@ class QDataViewer(QtGui.QWidget):
     def upload(self):
         self.filename = QtGui.QFileDialog.getOpenFileName(self, 'Upload File', '.')
         DataProvider.empty_folder(self.destination)
-        print 'File name :', DataProvider.get_face_name(self.filename)
+        print 'File name :', self.filename  # DataProvider.get_face_name(self.filename)
         copyfile(str(self.filename), self.destination + "/" + DataProvider.get_face_name(self.filename) + ".jpg")
 
     def button_action(self, button, action):
@@ -38,7 +38,7 @@ class QDataViewer(QtGui.QWidget):
         layout.addWidget(button)
 
     @staticmethod
-    def show_dialog(exception):
+    def show_alert_dialog(exception):
         msg = QtGui.QMessageBox()
         msg.setIcon(QtGui.QMessageBox.Warning)
 
@@ -47,6 +47,20 @@ class QDataViewer(QtGui.QWidget):
         msg.setWindowTitle("Something wrong occurred")
         msg.setDetailedText("The details are as follows:\n" + exception.message)
         print "The details are as follows:\n" + exception.message
+        msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+        msg.buttonClicked.connect(QDataViewer.msgbtn)
+
+        retval = msg.exec_()
+        print "value of pressed message box button:", retval
+
+    @staticmethod
+    def show_dialog(message, title):
+        msg = QtGui.QMessageBox()
+        msg.setIcon(QtGui.QMessageBox.Information)
+
+        msg.setText(title)
+        msg.setInformativeText(message)
+        msg.setWindowTitle("Something wrong occurred")
         msg.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
         msg.buttonClicked.connect(QDataViewer.msgbtn)
 

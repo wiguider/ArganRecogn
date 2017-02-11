@@ -17,7 +17,7 @@ import os
 import sys
 
 import graphlab as gl
-from PyQt4.QtGui import *
+from PyQt4 import QtGui
 
 from app.helpers.FaceDetector import FaceDetector as fd
 from app.ui.QDataViewer import *
@@ -47,7 +47,7 @@ def extract_faces_from_images():
         fd.face_extractor(imgsdir, cascPath, facesFolder)
         fd.face_extractor_google(images_google, cascPath, facesFolder)
     except Exception as e:
-        QDataViewer.show_dialog(e)
+        QDataViewer.show_alert_dialog(e)
 
 
 def load_images(images_folder):
@@ -67,7 +67,7 @@ def load_images(images_folder):
         images_array.remove_column('path')
         return images_array
     except Exception as e:
-        QDataViewer.show_dialog("ERROR : Load the faces in a Frame ")
+        QDataViewer.show_alert_dialog("ERROR : Load the faces in a Frame ")
 
 
 def split_images_array(images_array):
@@ -83,7 +83,7 @@ def split_images_array(images_array):
         test_data['image'] = gl.image_analysis.resize(test_data['image'], 50, 50, 1, decode=True)
         return test_data, training_data, validation_data
     except Exception as e:
-        QDataViewer.show_dialog(e)
+        QDataViewer.show_alert_dialog(e)
 
 
 def train_network(training_data, validation_data):
@@ -102,19 +102,19 @@ def train_network(training_data, validation_data):
                                                         max_iterations=max_iterations)
         return classifier, network
     except Exception as e:
-        QDataViewer.show_dialog(e)
+        QDataViewer.show_alert_dialog(e)
 
 
 def load_classifier():
     try:
         if os.path.exists("data/classifier.conf"):
             print "> load_classifier"
-            classifier = gl.load_model('data/classifier.conf')
+            classifier = gl.load_model(classifier_path)
             return classifier
     except Exception as e:
         print "ERROR : load_classifier"
         print e.message
-        QDataViewer.show_dialog(e)
+        QDataViewer.show_alert_dialog(e)
 
 
 def classify_and_save(classifier, test_data):
@@ -126,22 +126,27 @@ def classify_and_save(classifier, test_data):
         # Save to file
         if not os.path.exists('data'):
             os.makedirs('data')
-        classifier.save('data/classifier.conf')
+        classifier.save(classifier_path)
     except Exception as e:
-        QDataViewer.show_dialog(e)
+        QDataViewer.show_alert_dialog(e)
 
 
 def evaluate_image():
     try:
         images_array = load_images(facesFolderTest)
         images_array['image'] = gl.image_analysis.resize(images_array['image'], 50, 50, 1, decode=True)
-        print images_array
         classifier = load_classifier()
         classifier.classify(images_array)
-        print classifier.evaluate(images_array)
+        eval_ = classifier.evaluate(images_array, metric=['accuracy', 'recall@2', 'confusion_matrix'])
+        cf_mat = eval_['confusion_matrix']
+        print eval_['accuracy']
+        print 'This photo matches :', cf_mat['predicted_label'][0]
+        QDataViewer.show_dialog(
+            '{prefix}{suffix}'.format(prefix='This photo matches : ', suffix=cf_mat['predicted_label'][0]),
+            'The result of your research')
         # it ll be executed after click on "toSframe" button
     except Exception as e:
-        QDataViewer.show_dialog(e)
+        QDataViewer.show_alert_dialog(e)
 
 
 def get_missing_images():
@@ -150,7 +155,7 @@ def get_missing_images():
         provider.split_data(testset)
         provider.download_missing_images(images_google)
     except Exception as e:
-        QDataViewer.show_dialog(e)
+        QDataViewer.show_alert_dialog(e)
 
 
 def train_classify_network():
@@ -166,10 +171,10 @@ def train_classify_network():
         print "Evaluation"
         print classifier.evaluate(test_data)
 
-        classifier.save('data/classifier.conf')
+        classifier.save(classifier_path)
         network.save("data/net.conf")
     except Exception as e:
-        QDataViewer.show_dialog(e)
+        QDataViewer.show_alert_dialog(e)
 
 
 def build_gui():
@@ -178,7 +183,7 @@ def build_gui():
     layout = QtGui.QHBoxLayout()
     mw.add_button_upload('UPLOAD', layout)
     mw.add_button('EVALUATE', evaluate_image, layout)
-    mw.add_button('TRAIN', train_classify_network, layout)
+    # mw.add_button('TRAIN', train_classify_network, layout)
     mw.setLayout(layout)
     mw.show()
     sys.exit(app.exec_())

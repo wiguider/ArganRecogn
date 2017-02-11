@@ -76,4 +76,7 @@ class DataProvider:
         list_split_strings = element_path.split('/')
         face_name_num = list_split_strings[len(list_split_strings) - 1]
         face_name_arr = face_name_num.split('0')
+        if face_name_num == face_name_num.split('0')[0]:
+            face_name_arr = face_name_num.split('.')
+            return face_name_arr[0]
         return face_name_arr[0][:-1]
