@@ -220,7 +220,7 @@ def build_gui():
 
     mw.add_button_upload('UPLOAD', btn_layout)
     mw.add_button('EVALUATE', evaluate_image, btn_layout)
-    mw.add_button('TRAIN', train_classify_network, layout)
+    mw.add_button('TRAIN', train_classify_network, btn_layout)
     layout.addLayout(lbl_layout)
     layout.addLayout(btn_layout)
     mw.setLayout(layout)
