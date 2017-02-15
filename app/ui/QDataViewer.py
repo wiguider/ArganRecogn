@@ -4,59 +4,46 @@ from PyQt4 import QtCore, QtGui
 
 from app.helpers.DataProvider import DataProvider
 
+from app.ui.QButtonsPanel import QButtonsPanel as ButtonsPanel
+from app.ui.QLabelsPanel import QLabelsPanel as LabelsPanel
+
 
 class QDataViewer(QtGui.QWidget):
-    def __init__(self, destination):
+    def __init__(self):
         QtGui.QWidget.__init__(self)
         # Layout Init.
         self.setGeometry(300, 300, 600, 100)
         self.setWindowTitle('Upload image')
         # Attributes
         self.filename = ""
-        self.message = ""
-        self.destination = destination
+        self.upload_destination = ""
+
         self.layout = QtGui.QVBoxLayout()
         self.image = QtGui.QLabel()
+        self.labels_panel = LabelsPanel()
+        self.buttons_panel = ButtonsPanel()
 
-        # Signal Init.
-        # self.connect(self.uploadButton, QtCore.SIGNAL('clicked()'), self.upload)
+    def set_upload_destination(self, upload_destination):
+        self.upload_destination = upload_destination
 
     def upload(self):
         self.filename = QtGui.QFileDialog.getOpenFileName(self, 'Upload File', '.')
         self.label.setPixmap(QtGui.QPixmap())
 
-        DataProvider.empty_folder(self.destination)
+        DataProvider.empty_folder(self.upload_destination)
         print 'File name :', self.filename  # DataProvider.get_face_name(self.filename)
-        copyfile(str(self.filename), self.destination + "/" + DataProvider.get_face_name(self.filename) + ".jpg")
+        copyfile(str(self.filename), self.upload_destination + "/" + DataProvider.get_face_name(self.filename) + ".jpg")
 
         pixmap = QtGui.QPixmap(self.filename)
         # self.label.setPixmap(pixmap)
         # self.label.show()
         self.image.setPixmap(pixmap)
 
+    def add_button(self, text, action):
+        self.buttons_panel.add_button(text, action)
 
-        # self.show_dialog(self.message, 'Upload finished')
-
-    def button_action(self, button, action):
-        self.connect(button, QtCore.SIGNAL('clicked()'), action)
-
-    def add_button(self, text, action, layout):
-        button = QtGui.QPushButton(text, self)
-        self.button_action(button, action)
-        layout.addWidget(button)
-
-    def add_label(self, text, layout):
-        global label
-        self.label = QtGui.QLabel()
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.label.setText(text)
-        layout.addWidget(self.label)
-        return self.label
-
-    def add_button_upload(self, text, layout):
-        button = QtGui.QPushButton(text, self)
-        self.button_action(button, self.upload)
-        layout.addWidget(button)
+    def add_label(self, text):
+        return self.labels_panel.add_label(text)
 
     @staticmethod
     def show_alert_dialog(exception):
@@ -91,3 +78,10 @@ class QDataViewer(QtGui.QWidget):
     @staticmethod
     def msgbtn(i):
         print "Button pressed is:", i.text()
+
+    def build(self):
+        self.labels_panel.build()
+        self.buttons_panel.build()
+        self.layout.addWidget(self.labels_panel)
+        self.layout.addWidget(self.buttons_panel)
+        self.setLayout(self.layout)
